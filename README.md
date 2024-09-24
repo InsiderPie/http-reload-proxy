@@ -28,6 +28,7 @@ Configuration is done through environment variables. The following variables **m
 The following variables are optional:
 
 - `NODE_DEBUG=http-reload-proxy`: This will enable verbose (debugging) output
+- `ACCESS_CONTROL_ALLOW_ORIGIN`: This sets the value of the `access-control-allow-origin` header on responses sent by the livereload server. If not specified, the origin is set to `http://localhost:${PROXY_PORT}`
 
 ## Example
 
