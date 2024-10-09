@@ -1,4 +1,4 @@
-# http-reload-proxy
+# HTTP reload proxy
 
 HTTP/1.1 Proxy server that auto-reloads HTML pages when files in a directory change.
 
