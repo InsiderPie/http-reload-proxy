@@ -183,3 +183,13 @@ test("livereload server should detect renames in subdirectories", async context 
   const message = await messagePromise;
   assert.equal(message.data, "update");
 });
+
+test("livereload server should close when it gets a SIGTERM signal", async () => {
+  const ok = proxy.kill("SIGTERM");
+  assert.ok(ok);
+  const [closingMessage] = await once(proxy, "message");
+  assert.equal(closingMessage, "closing");
+  const [closeMessage] = await once(proxy, "message");
+  assert.equal(closeMessage, "close");
+  await once(proxy, "close");
+});

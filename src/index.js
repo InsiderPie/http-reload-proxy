@@ -83,6 +83,22 @@ Promise.all([
   process.send?.("listening");
 });
 
+process.on("SIGTERM", () => {
+  log("Received SIGTERM, closing servers");
+  process.send?.("closing");
+  fsWatcher.close();
+  proxyServer.close();
+  livereloadServer.close();
+  Promise.all([
+    once(proxyServer, "close"),
+    once(livereloadServer, "close"),
+  ]).then(() => {
+    log("Servers closed, exiting");
+    process.send?.("close");
+    process.exit(0);
+  });
+});
+
 async function sendProxyResponse(response, proxyResponse) {
   const isHTML = isHTMLResponse(proxyResponse);
   if (!isHTML) {
