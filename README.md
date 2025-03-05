@@ -31,6 +31,8 @@ The following variables are optional:
 
 - `NODE_DEBUG=http-reload-proxy`: This will enable verbose (debugging) output
 - `ACCESS_CONTROL_ALLOW_ORIGIN`: This sets the value of the `access-control-allow-origin` header on responses sent by the livereload server. If not specified, the origin is set to `http://localhost:${PROXY_PORT}`
+- `UPSTREAM_RETRIES`: Number of times to retry an upstream request if the upstream server is not reachable. Default is 5.
+- `UPSTREAM_RETRY_DELAY`: Delay in milliseconds between retries. Default is 200.
 
 ## Example
 
