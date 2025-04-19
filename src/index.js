@@ -121,34 +121,34 @@ async function readBody(readable) {
  * @returns
  */
 async function sendProxyResponse(downstreamResponse, upstreamResponse) {
-	const responseBody = await readBody(upstreamResponse);
-
+	const downstreamHeaders = upstreamResponse.headers;
 	const isHTML = isHTMLResponse(upstreamResponse);
-	if (!isHTML) {
-		downstreamResponse.writeHead(upstreamResponse.statusCode, upstreamResponse.headers);
-		downstreamResponse.end(responseBody);
-		return;
+	
+	if (isHTML) {
+		if (downstreamHeaders["content-security-policy"]) {
+			downstreamHeaders["content-security-policy"] = addLiveReloadScriptToCSP(
+				downstreamHeaders["content-security-policy"]
+			);
+		}
+		if (downstreamHeaders["content-security-policy-report-only"]) {
+			downstreamHeaders["content-security-policy-report-only"] = addLiveReloadScriptToCSP(
+				downstreamHeaders["content-security-policy-report-only"]
+			);
+		}
+		if (downstreamHeaders["content-length"]) {
+			downstreamHeaders["content-length"] =
+				(parseInt(downstreamHeaders["content-length"]) + livereloadScript.length)
+				.toString();
+		}
 	}
+	downstreamResponse.writeHead(upstreamResponse.statusCode, downstreamHeaders);
 
-	const proxyHeaders = upstreamResponse.headers;
-	if (proxyHeaders["content-security-policy"]) {
-		proxyHeaders["content-security-policy"] = addLiveReloadScriptToCSP(
-			proxyHeaders["content-security-policy"]
-		);
+	if (isHTML) {
+		await stream.pipeline(upstreamResponse, downstreamResponse, { end: false });
+		downstreamResponse.end(livereloadScript);
+	} else {
+		await stream.pipeline(upstreamResponse, downstreamResponse, { end: true });
 	}
-	if (proxyHeaders["content-security-policy-report-only"]) {
-		proxyHeaders["content-security-policy-report-only"] = addLiveReloadScriptToCSP(
-			proxyHeaders["content-security-policy-report-only"]
-		);
-	}
-	if (proxyHeaders["content-length"]) {
-		proxyHeaders["content-length"] =
-			(parseInt(proxyHeaders["content-length"]) + livereloadScript.length)
-			.toString();
-	}
-	downstreamResponse.writeHead(upstreamResponse.statusCode, proxyHeaders);
-	downstreamResponse.write(responseBody);
-	downstreamResponse.end(livereloadScript);
 }
 
 /**
