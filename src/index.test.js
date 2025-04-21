@@ -11,6 +11,8 @@ let proxy;
 let upstream;
 
 test.before(async () => {
+	await fs.mkdir("tmp", { recursive: true });
+
   upstream = http.createServer();
   upstream.listen(9081);
   await once(upstream, "listening");
@@ -23,6 +25,7 @@ test.before(async () => {
       LIVERELOAD_DELAY: "0",
       PROXY_PORT: "9080",
       WATCH_PATH: "tmp",
+      UPSTREAM_RETRIES: "0",
     },
   });
   await once(proxy, "message");
@@ -34,6 +37,7 @@ test.after(() => {
   }
   if (upstream.listening) {
     upstream.close();
+		upstream.closeAllConnections();
   }
 });
 
@@ -73,7 +77,7 @@ test("proxy server should inject livereload script into HTML responses", async (
 
 test("proxy server should change the upstream csp header if it does not have a script-src", async () => {
   setUpstreamBehavior((request, response) => {
-    response.writeHead(200, { 
+    response.writeHead(200, {
       "content-type": "text/html",
       "content-security-policy": "default-src 'self'"
     });
@@ -82,13 +86,13 @@ test("proxy server should change the upstream csp header if it does not have a s
 
   const response = await fetch("http://localhost:9080/");
   assert.equal(response.status, 200);
-  assert.equal(response.headers.get("content-security-policy"), 
-  "default-src 'self'; script-src 'sha256-dRzwlBsTdt31jik2aQY6AdmBBL8Fj0b/UoxTxHlLAJQ='");
+  assert.equal(response.headers.get("content-security-policy"),
+  "default-src 'self'; script-src 'sha256-e1dLFQD+gKGRpk+x50uR+Qp/wIupuL9w7pnr5gBG/xc='");
 });
 
 test("proxy server should change the upstream csp header if it has a script-src", async () => {
   setUpstreamBehavior((request, response) => {
-    response.writeHead(200, { 
+    response.writeHead(200, {
       "content-type": "text/html",
       "content-security-policy": "default-src 'self'; script-src 'self' https://js.example.com; style-src 'self' https://css.example.com"
     });
@@ -97,13 +101,13 @@ test("proxy server should change the upstream csp header if it has a script-src"
 
   const response = await fetch("http://localhost:9080/");
   assert.equal(response.status, 200);
-  assert.equal(response.headers.get("content-security-policy"), 
-  "default-src 'self'; script-src 'self' https://js.example.com 'sha256-dRzwlBsTdt31jik2aQY6AdmBBL8Fj0b/UoxTxHlLAJQ='; style-src 'self' https://css.example.com");
+  assert.equal(response.headers.get("content-security-policy"),
+  "default-src 'self'; script-src 'self' https://js.example.com 'sha256-e1dLFQD+gKGRpk+x50uR+Qp/wIupuL9w7pnr5gBG/xc='; style-src 'self' https://css.example.com");
 });
 
 test("proxy server should not change the upstream csp header if it has script-src 'unsafe-inline'", async () => {
   setUpstreamBehavior((request, response) => {
-    response.writeHead(200, { 
+    response.writeHead(200, {
       "content-type": "text/html",
       "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' https://css.example.com"
     });
@@ -112,7 +116,7 @@ test("proxy server should not change the upstream csp header if it has script-sr
 
   const response = await fetch("http://localhost:9080/");
   assert.equal(response.status, 200);
-  assert.equal(response.headers.get("content-security-policy"), 
+  assert.equal(response.headers.get("content-security-policy"),
   "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' https://css.example.com");
 });
 
