@@ -12,7 +12,9 @@ HTTP/1.1 Proxy server that auto-reloads HTML pages when files in a directory cha
 
 ### with docker
 
-
+```bash
+docker run ghcr.io/insiderpie/http-reload-proxy:main
+```
 
 ## Configuration
 
