@@ -12,7 +12,8 @@ const upstreamPort = envInt("UPSTREAM_PORT");
 const livereloadPort = envInt("LIVERELOAD_PORT");
 const livereloadDelay = envInt("LIVERELOAD_DELAY");
 const proxyPort = envInt("PROXY_PORT");
-const watchPath = env("WATCH_PATH")
+const watchPath = env("WATCH_PATH");
+const origin = process.env.ACCESS_CONTROL_ALLOW_ORIGIN || `http://localhost:${proxyPort}`;
 
 const livereloadScript = `<script>
   const livereload = new EventSource("http://localhost:${livereloadPort}/");
@@ -33,7 +34,7 @@ const livereloadServer = http.createServer((request, response) => {
     "cache-control": "no-cache",
     "connection": "keep-alive",
     "x-accel-buffering": "no",
-    "access-control-allow-origin": `http://localhost:${proxyPort}`,
+    "access-control-allow-origin": origin,
   });
   livereloadClients.add(response);
   request.on("close", () => {
